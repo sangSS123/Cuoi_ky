@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "103618453854",
+    "project_id": "hatgiong-ban",
+    "storage_bucket": "hatgiong-ban.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:103618453854:android:58d84d166a1a0627ff2fcf",
+        "android_client_info": {
+          "package_name": "com.example.ban_hat_giong"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6x3F3KJBHgHK-5ye5q5AFaDtHU5GF49s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
