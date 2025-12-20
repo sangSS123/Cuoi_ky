@@ -14,174 +14,159 @@ class RevenueStatsScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder<QuerySnapshot>(
+        // Lấy dữ liệu từ bảng revenue_reports
         stream: FirebaseFirestore.instance
-            .collection('order_history')
+            .collection('revenue_reports')
+            .orderBy('timestamp', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("Chưa có dữ liệu đơn hàng"));
+            return const Center(child: Text("Chưa có dữ liệu doanh thu"));
           }
 
-          final docs = snapshot.data!.docs;
-
-          // Tính toán số liệu
           double totalRevenue = 0;
-          double todayRevenue = 0;
-          int completedOrders = 0;
-          int pendingOrders = 0;
-          int canceledOrders = 0;
+          int totalOrders = snapshot.data!.docs.length;
+          Map<String, double> dailyStats = {};
 
-          DateTime now = DateTime.now();
-
-          for (var doc in docs) {
+          // Xử lý dữ liệu để tính tổng và nhóm theo ngày
+          for (var doc in snapshot.data!.docs) {
             Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-            double amount = (data['totalAmount'] as num).toDouble();
-            String status = data['status'] ?? 'Chờ xác nhận';
-            Timestamp? ts = data['timestamp'] as Timestamp?;
+            double amount = (data['amount'] as num? ?? 0).toDouble();
+            totalRevenue += amount;
 
-            if (status == 'Hoàn thành') {
-              totalRevenue += amount;
-              completedOrders++;
-
-              // Kiểm tra nếu là doanh thu hôm nay
-              if (ts != null) {
-                DateTime date = ts.toDate();
-                if (date.day == now.day &&
-                    date.month == now.month &&
-                    date.year == now.year) {
-                  todayRevenue += amount;
-                }
-              }
-            } else if (status == 'Đã hủy') {
-              canceledOrders++;
-            } else {
-              pendingOrders++;
+            // Lấy ngày từ timestamp
+            Timestamp? timestamp = data['timestamp'] as Timestamp?;
+            if (timestamp != null) {
+              String dateKey = DateFormat(
+                'dd/MM/yyyy',
+              ).format(timestamp.toDate());
+              dailyStats[dateKey] = (dailyStats[dateKey] ?? 0) + amount;
             }
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildSummaryCard(
-                  "TỔNG DOANH THU",
-                  "${NumberFormat('#,###').format(totalRevenue)}đ",
-                  Icons.monetization_on,
-                  Colors.green,
+          return Column(
+            children: [
+              // --- PHẦN TỔNG QUAN (Card phía trên) ---
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  border: Border(
+                    bottom: BorderSide(color: Colors.green.shade100),
+                  ),
                 ),
-                const SizedBox(height: 15),
-                _buildSummaryCard(
-                  "DOANH THU HÔM NAY",
-                  "${NumberFormat('#,###').format(todayRevenue)}đ",
-                  Icons.today,
-                  Colors.blue,
-                ),
-                const SizedBox(height: 25),
-                const Text(
-                  "Trạng thái đơn hàng",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 15),
-                Row(
+                child: Column(
                   children: [
-                    _buildSmallStatCard(
-                      "Hoàn thành",
-                      completedOrders.toString(),
-                      Colors.green,
+                    const Text(
+                      "TỔNG DOANH THU",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    _buildSmallStatCard(
-                      "Đang xử lý",
-                      pendingOrders.toString(),
-                      Colors.orange,
+                    Text(
+                      "${NumberFormat('#,###').format(totalRevenue)}đ",
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
                     ),
-                    _buildSmallStatCard(
-                      "Đã hủy",
-                      canceledOrders.toString(),
-                      Colors.red,
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.shopping_cart_checkout,
+                          size: 20,
+                          color: Colors.orange,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          "Tổng đơn hàng: ",
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                        Text(
+                          "$totalOrders đơn",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
-                // Có thể thêm danh sách các đơn hàng thành công gần đây ở đây
-              ],
-            ),
+              ),
+
+              // --- DANH SÁCH DOANH THU THEO NGÀY ---
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text(
+                      "Doanh thu theo ngày",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: ListView.builder(
+                  itemCount: dailyStats.length,
+                  itemBuilder: (context, index) {
+                    String date = dailyStats.keys.elementAt(index);
+                    double dailyAmount = dailyStats[date]!;
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 5,
+                      ),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Colors.green,
+                          child: Icon(
+                            Icons.trending_up,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          date,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        trailing: Text(
+                          "${NumberFormat('#,###').format(dailyAmount)}đ",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color, width: 1),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: color,
-            radius: 30,
-            child: Icon(icon, color: Colors.white, size: 30),
-          ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(color: color, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSmallStatCard(String label, String value, Color color) {
-    return Expanded(
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: Column(
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -5,22 +5,44 @@ import 'package:intl/intl.dart';
 class AdminOrdersScreen extends StatelessWidget {
   const AdminOrdersScreen({super.key});
 
-  // Hàm cập nhật trạng thái đơn hàng lên Firestore
+  // HÀM CẬP NHẬT: Giữ nguyên tên hàm, thêm logic ghi bảng revenue_reports
   Future<void> _updateOrderStatus(
     BuildContext context,
     String orderId,
     String newStatus,
+    double amount, // Thêm tham số amount để lấy số tiền đơn hàng
   ) async {
     try {
-      await FirebaseFirestore.instance
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 1. Cập nhật trạng thái trong 'order_history' (Ảnh 1)
+      final orderRef = FirebaseFirestore.instance
           .collection('order_history')
-          .doc(orderId)
-          .update({'status': newStatus});
+          .doc(orderId);
+      batch.update(orderRef, {'status': newStatus});
+
+      // 2. LOGIC QUAN TRỌNG: Nếu là 'Hoàn thành', ghi vào 'revenue_reports' (Ảnh 2)
+      if (newStatus == 'Hoàn thành') {
+        final revenueRef = FirebaseFirestore.instance
+            .collection('revenue_reports')
+            .doc(orderId);
+        batch.set(revenueRef, {
+          'orderId': orderId,
+          'amount': amount,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await batch.commit(); // Thực hiện ghi cả 2 bảng cùng lúc
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Đã chuyển trạng thái sang: $newStatus"),
+          content: Text(
+            newStatus == 'Hoàn thành'
+                ? "Đã hoàn thành và cộng $amountđ vào doanh thu!"
+                : "Đã chuyển trạng thái sang: $newStatus",
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -43,7 +65,6 @@ class AdminOrdersScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Lấy tất cả đơn hàng từ tất cả người dùng, sắp xếp mới nhất lên đầu
         stream: FirebaseFirestore.instance
             .collection('order_history')
             .orderBy('timestamp', descending: true)
@@ -53,45 +74,41 @@ class AdminOrdersScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("Hiện chưa có đơn hàng nào."));
+            return const Center(child: Text("Không có đơn hàng nào"));
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(10),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
-              var orderDoc = snapshot.data!.docs[index];
-              var orderData = orderDoc.data() as Map<String, dynamic>;
-              var items = orderData['items'] as List<dynamic>;
-              var timestamp = orderData['timestamp'] as Timestamp?;
-              String currentStatus = orderData['status'] ?? 'Chờ xác nhận';
+              final orderDoc = snapshot.data!.docs[index];
+              final data = orderDoc.data() as Map<String, dynamic>;
+
+              final status = data['status'] ?? 'Chờ xác nhận';
+              final totalAmount = (data['totalAmount'] as num? ?? 0).toDouble();
+              final items = (data['items'] as List<dynamic>? ?? []);
+              final timestamp =
+                  (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
 
               return Card(
-                elevation: 4,
-                margin: const EdgeInsets.only(bottom: 15),
+                margin: const EdgeInsets.all(10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
+                elevation: 3,
                 child: ExpansionTile(
                   leading: CircleAvatar(
-                    backgroundColor: _getStatusColor(
-                      currentStatus,
-                    ).withOpacity(0.2),
+                    backgroundColor: _getStatusColor(status).withOpacity(0.2),
                     child: Icon(
-                      Icons.receipt_long,
-                      color: _getStatusColor(currentStatus),
+                      Icons.shopping_bag,
+                      color: _getStatusColor(status),
                     ),
                   ),
                   title: Text(
-                    "Đơn: ...${orderDoc.id.substring(orderDoc.id.length - 6)}",
+                    "Đơn hàng: ${orderDoc.id.substring(0, 8)}",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    "Tổng: ${orderData['totalAmount'].toInt()}đ - $currentStatus",
-                    style: TextStyle(
-                      color: _getStatusColor(currentStatus),
-                      fontWeight: FontWeight.w500,
-                    ),
+                    "${DateFormat('dd/MM/yyyy HH:mm').format(timestamp)} - ${NumberFormat('#,###').format(totalAmount)}đ",
                   ),
                   children: [
                     Padding(
@@ -99,60 +116,13 @@ class AdminOrdersScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Divider(),
-                          const Text(
-                            "THÔNG TIN KHÁCH HÀNG",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            "SĐT: ${orderData['phone']}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text("Địa chỉ: ${orderData['address']}"),
-                          Text(
-                            "Thời gian: ${timestamp != null ? DateFormat('dd/MM/yyyy HH:mm').format(timestamp.toDate()) : 'Không rõ'}",
-                          ),
-                          const SizedBox(height: 15),
-
-                          const Text(
-                            "CHI TIẾT SẢN PHẨM",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                           ...items.map(
-                            (item) => ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: Image.network(
-                                item['image'],
-                                width: 30,
-                                height: 30,
-                                fit: BoxFit.cover,
-                              ),
-                              title: Text(
-                                item['name'],
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              trailing: Text("x${item['quantity']}"),
-                            ),
+                            (item) =>
+                                Text("• ${item['name']} x${item['quantity']}"),
                           ),
-
                           const Divider(),
-                          const Text(
-                            "CẬP NHẬT TRẠNG THÁI",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          Text("Địa chỉ: ${data['address'] ?? 'N/A'}"),
+                          Text("SĐT: ${data['phone'] ?? 'N/A'}"),
                           const SizedBox(height: 10),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -163,20 +133,23 @@ class AdminOrdersScreen extends StatelessWidget {
                                   orderDoc.id,
                                   "Đang giao",
                                   Colors.blue,
+                                  totalAmount,
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 5),
                                 _statusBtn(
                                   context,
                                   orderDoc.id,
                                   "Hoàn thành",
                                   Colors.green,
+                                  totalAmount,
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 5),
                                 _statusBtn(
                                   context,
                                   orderDoc.id,
                                   "Đã hủy",
                                   Colors.red,
+                                  totalAmount,
                                 ),
                               ],
                             ),
@@ -194,12 +167,12 @@ class AdminOrdersScreen extends StatelessWidget {
     );
   }
 
-  // Widget nút bấm thay đổi trạng thái
   Widget _statusBtn(
     BuildContext context,
     String id,
     String status,
     Color color,
+    double amount,
   ) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -208,12 +181,11 @@ class AdminOrdersScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      onPressed: () => _updateOrderStatus(context, id, status),
+      onPressed: () => _updateOrderStatus(context, id, status, amount),
       child: Text(status, style: const TextStyle(fontSize: 12)),
     );
   }
 
-  // Hàm trả về màu sắc tương ứng với trạng thái
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Đang giao':
@@ -223,7 +195,7 @@ class AdminOrdersScreen extends StatelessWidget {
       case 'Đã hủy':
         return Colors.red;
       default:
-        return Colors.orange; // Chờ xác nhận
+        return Colors.orange;
     }
   }
 }

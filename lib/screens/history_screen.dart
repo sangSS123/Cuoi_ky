@@ -10,15 +10,16 @@ import 'package:ban_hat_giong/screens/checkout_screen.dart';
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
-  // --- HÀM XỬ LÝ XOÁ ĐƠN HÀNG ---
-  Future<void> _deleteOrder(BuildContext context, String orderId) async {
+  // --- HÀM XOÁ LỊCH SỬ ĐƠN HÀNG ---
+  // Việc xoá này chỉ xoá trong 'order_history', không xoá trong 'revenue_reports'
+  Future<void> _deleteOrderHistory(BuildContext context, String orderId) async {
     bool confirm =
         await showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text("Xác nhận xoá"),
             content: const Text(
-              "Bạn có chắc chắn muốn xoá đơn hàng này không?",
+              "Bạn có chắc chắn muốn xoá đơn hàng này khỏi lịch sử không?",
             ),
             actions: [
               TextButton(
@@ -35,18 +36,29 @@ class HistoryScreen extends StatelessWidget {
         false;
 
     if (confirm) {
-      await FirebaseFirestore.instance
-          .collection('order_history')
-          .doc(orderId)
-          .delete();
+      try {
+        await FirebaseFirestore.instance
+            .collection('order_history')
+            .doc(orderId)
+            .delete();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Đã xoá đơn hàng khỏi lịch sử.")),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Lỗi khi xoá: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  // --- HÀM MUA LẠI CÓ KIỂM TRA TỒN KHO ---
+  // --- HÀM MUA LẠI (KIỂM TRA TỒN KHO) ---
   Future<void> _reorder(BuildContext context, List<dynamic> items) async {
     final cart = Provider.of<CartProvider>(context, listen: false);
 
-    // Hiện Loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -55,83 +67,44 @@ class HistoryScreen extends StatelessWidget {
     );
 
     try {
-      List<String> outOfStockItems = [];
-      bool hasAtLeastOneItem = false;
-
-      // 1. Kiểm tra từng món trong đơn hàng cũ xem còn hàng không
+      bool hasStock = false;
       for (var item in items) {
         var productDoc = await FirebaseFirestore.instance
             .collection('products')
             .doc(item['id'])
             .get();
-
-        if (productDoc.exists) {
-          int currentStock = productDoc.data()?['quantity'] ?? 0;
-
-          if (currentStock > 0) {
-            // Còn hàng -> Thêm vào giỏ (số lượng lấy theo đơn cũ hoặc số lượng còn lại trong kho)
-            int quantityToAdd = (item['quantity'] as int) > currentStock
-                ? currentStock
-                : item['quantity'];
-
-            for (int i = 0; i < quantityToAdd; i++) {
-              await cart.addItem(
-                item['id'],
-                (item['price'] as num).toDouble(),
-                item['name'],
-                item['image'],
-              );
-            }
-            hasAtLeastOneItem = true;
-          } else {
-            outOfStockItems.add(item['name']);
-          }
-        } else {
-          outOfStockItems.add("${item['name']} (Đã ngừng bán)");
+        if (productDoc.exists && (productDoc.data()?['quantity'] ?? 0) > 0) {
+          await cart.addItem(
+            item['id'],
+            (item['price'] as num).toDouble(),
+            item['name'],
+            item['image'],
+          );
+          hasStock = true;
         }
       }
 
-      if (!context.mounted) return;
-      Navigator.pop(context); // Đóng Loading
+      Navigator.pop(context); // Đóng loading
 
-      // 2. Xử lý kết quả kiểm tra
-      if (!hasAtLeastOneItem) {
-        // Trường hợp tất cả đều hết hàng
-        _showError(
-          context,
-          "Rất tiếc, tất cả sản phẩm trong đơn này hiện đã hết hàng!",
-        );
-      } else {
-        // Nếu có món hết, có món còn
-        if (outOfStockItems.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Lưu ý: Một số món (${outOfStockItems.join(', ')}) đã hết hàng nên không được thêm vào.",
-              ),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-
-        // 3. Chuyển sang trang thanh toán
+      if (hasStock) {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const CheckoutScreen()),
         );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Sản phẩm hiện đã hết hàng!"),
+            backgroundColor: Colors.orange,
+          ),
+        );
       }
     } catch (e) {
-      if (!context.mounted) return;
       Navigator.pop(context);
-      _showError(context, "Lỗi khi kiểm tra kho: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Lỗi: $e")));
     }
-  }
-
-  void _showError(BuildContext context, String msg) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   @override
@@ -139,137 +112,124 @@ class HistoryScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Lịch sử mua hàng"),
+        title: const Text(
+          "Lịch sử mua hàng",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: user == null
-          ? const Center(child: Text("Vui lòng đăng nhập"))
+          ? const Center(child: Text("Vui lòng đăng nhập để xem lịch sử"))
           : StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('order_history')
                   .where('userId', isEqualTo: user.uid)
-                  .orderBy('timestamp', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData)
                   return const Center(child: CircularProgressIndicator());
-                if (snapshot.data!.docs.isEmpty)
-                  return const Center(
-                    child: Text("Bạn chưa mua hàng lần nào."),
-                  );
+                if (snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("Bạn chưa có đơn hàng nào."));
+                }
+
+                var docs = snapshot.data!.docs;
+                // Sắp xếp đơn mới nhất lên đầu
+                docs.sort((a, b) {
+                  Timestamp t1 =
+                      (a.data() as Map)['timestamp'] ?? Timestamp.now();
+                  Timestamp t2 =
+                      (b.data() as Map)['timestamp'] ?? Timestamp.now();
+                  return t2.compareTo(t1);
+                });
 
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
-                  itemCount: snapshot.data!.docs.length,
+                  itemCount: docs.length,
                   itemBuilder: (context, index) {
-                    var data =
-                        snapshot.data!.docs[index].data()
-                            as Map<String, dynamic>;
+                    var data = docs[index].data() as Map<String, dynamic>;
                     var items = data['items'] as List<dynamic>;
-                    var timestamp = data['timestamp'] as Timestamp?;
+                    String status = data['status'] ?? 'Chờ xác nhận';
 
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 15),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildStatusChip(
-                                  data['status'] ?? 'Chờ xác nhận',
-                                ),
-                                IconButton(
-                                  onPressed: () => _deleteOrder(
-                                    context,
-                                    snapshot.data!.docs[index].id,
-                                  ),
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            ...items.map(
-                              (item) => ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: Image.network(
-                                  item['image'],
-                                  width: 35,
-                                ),
-                                title: Text(
-                                  item['name'],
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                                trailing: Text("x${item['quantity']}"),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            title: Text(
+                              status,
+                              style: TextStyle(
+                                color: status == 'Hoàn thành'
+                                    ? Colors.green
+                                    : Colors.orange,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const Divider(),
-                            Row(
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () =>
+                                  _deleteOrderHistory(context, docs[index].id),
+                            ),
+                          ),
+                          const Divider(height: 1),
+                          ...items.map(
+                            (item) => ListTile(
+                              leading: Image.network(
+                                item['image'],
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                              ),
+                              title: Text(
+                                item['name'],
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              trailing: Text("x${item['quantity']}"),
+                            ),
+                          ),
+                          const Divider(height: 1),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  timestamp != null
-                                      ? DateFormat(
-                                          'dd/MM/yy HH:mm',
-                                        ).format(timestamp.toDate())
-                                      : '',
+                                  "${NumberFormat('#,###').format(data['totalAmount'])}đ",
                                   style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: () => _reorder(context, items),
-                                  icon: const Icon(Icons.refresh, size: 16),
-                                  label: const Text(
-                                    "Mua lại",
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue.shade700,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  "${data['totalAmount'].toInt()}đ",
-                                  style: const TextStyle(
-                                    color: Colors.red,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => _reorder(context, items),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                  ),
+                                  child: const Text(
+                                    "Mua lại",
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   },
                 );
               },
             ),
-    );
-  }
-
-  Widget _buildStatusChip(String status) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: status == 'Đã hoàn thành' ? Colors.green : Colors.orange,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        status,
-        style: const TextStyle(color: Colors.white, fontSize: 11),
-      ),
     );
   }
 }

@@ -24,7 +24,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.dispose();
   }
 
-  // --- HÀM XỬ LÝ ĐẶT HÀNG & TRỪ KHO ---
   Future<void> _processOrder(CartProvider cart) async {
     final user = FirebaseAuth.instance.currentUser;
     final String address = _addressController.text.trim();
@@ -42,12 +41,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     setState(() => _isLoading = true);
-
-    // Sử dụng Batch để thực hiện nhiều lệnh cùng lúc (Lưu đơn + Trừ kho)
     final batch = FirebaseFirestore.instance.batch();
 
     try {
-      // 1. Tạo document đơn hàng mới
       final orderRef = FirebaseFirestore.instance
           .collection('order_history')
           .doc();
@@ -71,28 +67,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // 2. Lệnh trừ số lượng trong kho cho từng sản phẩm
       for (var item in cart.items.values) {
         final productRef = FirebaseFirestore.instance
             .collection('products')
             .doc(item.id);
         batch.update(productRef, {
-          'quantity': FieldValue.increment(
-            -item.quantity,
-          ), // Trừ đi số lượng khách mua
+          'quantity': FieldValue.increment(-item.quantity),
         });
       }
 
-      // 3. Thực thi batch
       await batch.commit();
-
-      // 4. Xóa giỏ hàng
       await cart.clearCart();
 
       if (!mounted) return;
       setState(() => _isLoading = false);
-
-      // 5. Hiện thông báo thành công
       _showSuccessDialog();
     } catch (e) {
       if (!mounted) return;
@@ -111,10 +99,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text("Thành công!"),
-        content: const Text(
-          "Đơn hàng đã được ghi nhận và số lượng kho đã cập nhật.",
-        ),
+        title: const Text("THÀNH CÔNG!"),
+        content: const Text("ĐƠN HÀNG CỦA BẠN SẼ ĐƯỢC GIAO SỚM."),
         actions: [
           TextButton(
             onPressed: () {
@@ -173,6 +159,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                   const Divider(height: 40),
+
+                  // --- PHẦN QR CODE TỪ ASSETS ---
+                  const Center(
+                    child: Text(
+                      "QUÉT MÃ QR ĐỂ THANH TOÁN",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset(
+                          'assets/qr_code.png', // Gọi đúng file trong assets của bạn
+                          width: 250,
+                          height: 250,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Divider(height: 40),
                   const Text(
                     "Sản phẩm thanh toán",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -193,50 +212,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                   const Divider(height: 30),
-
-                  // --- PHẦN QR CODE THANH TOÁN ---
-                  Center(
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Quét QR để chuyển khoản thanh toán",
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Image.asset(
-                            'assets/qr_code.png', // Tên ảnh của bạn
-                            width: 220,
-                            height: 220,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Column(
-                                  children: [
-                                    Icon(
-                                      Icons.qr_code_2,
-                                      size: 80,
-                                      color: Colors.grey,
-                                    ),
-                                    Text(
-                                      "Lỗi tải ảnh QR",
-                                      style: TextStyle(fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
                   Center(
                     child: Text(
                       "TỔNG CỘNG: ${cart.totalAmount.toInt()}đ",
@@ -253,16 +228,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
       bottomSheet: Container(
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 5,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
@@ -273,7 +238,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           onPressed: cart.items.isEmpty ? null : () => _processOrder(cart),
           child: const Text(
-            "XÁC NHẬN THANH TOÁN",
+            "XÁC NHẬN ĐÃ CHUYỂN KHOẢN",
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
