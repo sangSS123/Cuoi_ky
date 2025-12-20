@@ -33,9 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Cập nhật giỏ hàng khi vào app
     Future.microtask(() => context.read<CartProvider>().fetchAndSetCart());
   }
 
+  // Chuyển đổi ID danh mục sang tên hiển thị
   String formatCategory(String? id) {
     if (id == 'cay_an_la') return 'Rau';
     if (id == 'cay_an_qua') return 'Cây ăn quả';
@@ -45,372 +47,370 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: Colors.green,
         elevation: 0,
-        title: Container(
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: TextField(
-            onChanged: (v) => setState(() => searchQuery = v.toLowerCase()),
-            textAlignVertical:
-                TextAlignVertical.center, // Căn giữa chữ theo chiều dọc
-            decoration: const InputDecoration(
-              hintText: "Tìm hạt giống...",
-              hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-              prefixIcon: Icon(Icons.search, color: Colors.green, size: 20),
-              border: InputBorder.none,
-              // Điều chỉnh padding để không bị lệch
-              contentPadding: EdgeInsets.symmetric(vertical: 8),
-              isDense: true,
-            ),
-          ),
-        ),
-        actions: [
-          Consumer<CartProvider>(
-            builder: (context, cart, child) => IconButton(
-              icon: Badge(
-                label: Text(
-                  cart.itemCount.toString(),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                isLabelVisible: cart.itemCount > 0,
-                backgroundColor: Colors.red,
-                alignment: const AlignmentDirectional(10, -8),
-                child: const Icon(
-                  Icons.shopping_cart,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CartScreen()),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-        ],
+        title: _buildSearchField(),
+        actions: [_buildCartBadge()],
       ),
-      drawer: Drawer(
-        child: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(user?.uid)
-              .snapshots(),
-          builder: (context, snapshot) {
-            String name = "Người dùng";
-            String avatarUrl = "";
-            String role = "user";
-
-            if (snapshot.hasData && snapshot.data!.exists) {
-              var data = snapshot.data!.data() as Map<String, dynamic>;
-              name = data['fullname'] ?? "Người dùng";
-              avatarUrl = data['avatar'] ?? "";
-              role = data['role'] ?? "user";
-            }
-
-            return ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                UserAccountsDrawerHeader(
-                  decoration: const BoxDecoration(color: Colors.green),
-                  accountName: Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  accountEmail: Text(user?.email ?? ""),
-                  currentAccountPicture: Center(
-                    child: Container(
-                      width: 75,
-                      height: 75,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        border: Border.all(color: Colors.black, width: 3),
-                      ),
-                      child: OverflowBox(
-                        maxWidth: double.infinity,
-                        maxHeight: double.infinity,
-                        child: ClipOval(
-                          child: avatarUrl.isNotEmpty
-                              ? Image.network(
-                                  avatarUrl,
-                                  width: 95,
-                                  height: 95,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.asset(
-                                  'assets/user_avatar.png',
-                                  width: 95,
-                                  height: 95,
-                                  fit: BoxFit.cover,
-                                ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.home, color: Colors.green),
-                  title: const Text("Trang chủ"),
-                  onTap: () => Navigator.pop(context),
-                ),
-                ListTile(
-                  leading: const Icon(
-                    Icons.account_circle,
-                    color: Colors.green,
-                  ),
-                  title: const Text("Hồ sơ cá nhân"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfileScreen(),
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.history, color: Colors.green),
-                  title: const Text("Lịch sử mua hàng"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HistoryScreen(),
-                      ),
-                    );
-                  },
-                ),
-                if (role == 'admin') ...[
-                  const Divider(),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 16, top: 10, bottom: 5),
-                    child: Text(
-                      "QUẢN TRỊ VIÊN",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.inventory, color: Colors.orange),
-                    title: const Text("Quản lý mặt hàng"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AdminProductList(),
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.assignment, color: Colors.orange),
-                    title: const Text("Quản lý đơn hàng"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AdminOrdersScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.people, color: Colors.blue),
-                    title: const Text("Quản lý người dùng"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AdminUserManagement(),
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.bar_chart, color: Colors.purple),
-                    title: const Text("Thống kê doanh thu"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RevenueStatsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text("Đăng xuất"),
-                  onTap: () async {
-                    await FirebaseAuth.instance.signOut();
-                    if (!mounted) return;
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WelcomeScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+      drawer: _buildDrawer(),
       body: Column(
         children: [
-          Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                bool isSelected = selectedCategory == categories[index];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(categories[index]),
-                    selected: isSelected,
-                    selectedColor: Colors.green,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black,
-                    ),
-                    onSelected: (bool selected) =>
-                        setState(() => selectedCategory = categories[index]),
+          _buildCategorySlider(),
+          Expanded(child: _buildProductGrid()),
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGET: THANH TÌM KIẾM TRÊN APPBAR ---
+  Widget _buildSearchField() {
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: TextField(
+        onChanged: (v) => setState(() => searchQuery = v.toLowerCase()),
+        textAlignVertical: TextAlignVertical.center,
+        decoration: const InputDecoration(
+          hintText: "Tìm hạt giống...",
+          prefixIcon: Icon(Icons.search, color: Colors.green, size: 22),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10),
+        ),
+      ),
+    );
+  }
+
+  // --- WIDGET: ICON GIỎ HÀNG CÓ SỐ LƯỢNG ---
+  Widget _buildCartBadge() {
+    return Consumer<CartProvider>(
+      builder: (context, cart, child) => IconButton(
+        icon: Badge(
+          label: Text(cart.itemCount.toString()),
+          isLabelVisible: cart.itemCount > 0,
+          child: const Icon(Icons.shopping_cart, color: Colors.white),
+        ),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CartScreen()),
+        ),
+      ),
+    );
+  }
+
+  // --- WIDGET: DRAWER CÓ AVATAR "LÒI KHUNG" ---
+  Widget _buildDrawer() {
+    return Drawer(
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user?.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          String name = "Người dùng";
+          String role = "user";
+          if (snapshot.hasData && snapshot.data!.exists) {
+            var data = snapshot.data!.data() as Map<String, dynamic>;
+            name = data['fullname'] ?? "Người dùng";
+            role = data['role'] ?? "user";
+          }
+
+          return ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              UserAccountsDrawerHeader(
+                decoration: const BoxDecoration(color: Colors.green),
+                accountName: Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
-                );
-              },
-            ),
-          ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('products')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData)
-                  return const Center(child: CircularProgressIndicator());
-
-                var docs = snapshot.data!.docs.where((d) {
-                  var data = d.data() as Map<String, dynamic>;
-                  String name = (data['name'] ?? "").toString().toLowerCase();
-                  String categoryName = formatCategory(data['id_category']);
-                  return name.contains(searchQuery) &&
-                      (selectedCategory == "Tất cả" ||
-                          categoryName == selectedCategory);
-                }).toList();
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.58,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    var data = docs[index].data() as Map<String, dynamic>;
-                    bool isOutOfStock = (data['quantity'] ?? 0) <= 0;
-
-                    return Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                ),
+                accountEmail: Text(user?.email ?? ""),
+                // PHẦN AVATAR ĐỘC LẬP VỚI KHUNG
+                currentAccountPicture: OverflowBox(
+                  minWidth: 0,
+                  minHeight: 0,
+                  maxWidth: double.infinity,
+                  maxHeight: double.infinity,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none, // Cho phép ảnh lòi ra ngoài Stack
+                    children: [
+                      // 1. Khung viền trắng (Cố định 80x80)
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 2.5),
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProductDetailScreen(
-                                    product: {...data, 'id': docs[index].id},
+                      // 2. Avatar Mèo (Chỉnh size ở đây để thấy hiệu ứng lòi khung)
+                      ClipOval(
+                        child: Image.asset(
+                          'assets/user_avatar.png',
+                          width:
+                              113, // Bạn có thể chỉnh lên 150, 200 để thấy nó lòi ra rõ rệt
+                          height: 113,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _drawerTile(
+                Icons.home,
+                "Trang chủ",
+                () => Navigator.pop(context),
+              ),
+              _drawerTile(
+                Icons.person,
+                "Hồ sơ cá nhân",
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => const ProfileScreen()),
+                ),
+              ),
+              _drawerTile(
+                Icons.history,
+                "Lịch sử mua hàng",
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => const HistoryScreen()),
+                ),
+              ),
+
+              if (role == 'admin') ...[
+                const Divider(),
+                const Padding(
+                  padding: EdgeInsets.only(left: 16, top: 10, bottom: 5),
+                  child: Text(
+                    "QUẢN TRỊ VIÊN",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                _drawerTile(
+                  Icons.inventory,
+                  "Quản lý mặt hàng",
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (c) => const AdminProductList()),
+                  ),
+                  color: Colors.orange,
+                ),
+                _drawerTile(
+                  Icons.assignment,
+                  "Quản lý đơn hàng",
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (c) => const AdminOrdersScreen(),
+                    ),
+                  ),
+                  color: Colors.orange,
+                ),
+                _drawerTile(
+                  Icons.people,
+                  "Quản lý người dùng",
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (c) => const AdminUserManagement(),
+                    ),
+                  ),
+                  color: Colors.blue,
+                ),
+                _drawerTile(
+                  Icons.bar_chart,
+                  "Thống kê doanh thu",
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (c) => const RevenueStatsScreen(),
+                    ),
+                  ),
+                  color: Colors.purple,
+                ),
+              ],
+              const Divider(),
+              _drawerTile(Icons.logout, "Đăng xuất", () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (c) => const WelcomeScreen()),
+                );
+              }, color: Colors.red),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _drawerTile(
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    Color color = Colors.green,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      onTap: onTap,
+    );
+  }
+
+  // --- WIDGET: THANH CHỌN DANH MỤC (CHIPS) ---
+  Widget _buildCategorySlider() {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          bool isSelected = selectedCategory == categories[index];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(categories[index]),
+              selected: isSelected,
+              selectedColor: Colors.green,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+              ),
+              onSelected: (val) =>
+                  setState(() => selectedCategory = categories[index]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // --- WIDGET: LƯỚI SẢN PHẨM 2 CỘT ---
+  Widget _buildProductGrid() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('products').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+
+        var docs = snapshot.data!.docs.where((d) {
+          var data = d.data() as Map<String, dynamic>;
+          String name = (data['name'] ?? "").toString().toLowerCase();
+          return name.contains(searchQuery) &&
+              (selectedCategory == "Tất cả" ||
+                  formatCategory(data['id_category']) == selectedCategory);
+        }).toList();
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(12),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.72,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            var data = docs[index].data() as Map<String, dynamic>;
+            bool isOutOfStock = (data['quantity'] ?? 0) <= 0;
+
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (c) => ProductDetailScreen(
+                            product: {...data, 'id': docs[index].id},
+                          ),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(15),
+                        ),
+                        child: Stack(
+                          children: [
+                            Image.network(
+                              data['image'] ?? "",
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                            if (isOutOfStock)
+                              Container(
+                                color: Colors.black45,
+                                child: const Center(
+                                  child: Text(
+                                    "HẾT HÀNG",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(12),
-                                      ),
-                                      child: Image.network(
-                                        data['image'] ?? "",
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        errorBuilder: (c, e, s) => const Icon(
-                                          Icons.image_not_supported,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          data['name'] ?? "",
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          "${data['price']}đ",
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.red,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          data['name'] ?? "",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "${data['price']}đ",
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
                           ),
-                          ElevatedButton(
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: isOutOfStock
                                   ? Colors.grey
                                   : Colors.green,
-                              minimumSize: const Size(double.infinity, 32),
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(
-                                  bottom: Radius.circular(12),
-                                ),
-                              ),
+                              shape: const StadiumBorder(),
+                              elevation: 0,
                             ),
                             onPressed: isOutOfStock
                                 ? null
@@ -421,13 +421,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                       data['name'],
                                       data['image'],
                                     );
-                                    ScaffoldMessenger.of(
-                                      context,
-                                    ).hideCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'Đã thêm "${data['name']}" vào giỏ',
+                                          'Đã thêm ${data['name']}',
                                         ),
                                         duration: const Duration(seconds: 1),
                                         backgroundColor: Colors.green,
@@ -437,21 +434,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(
                               isOutOfStock ? "HẾT" : "MUA",
                               style: const TextStyle(
-                                fontSize: 11,
                                 color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -44,42 +44,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .collection('users')
             .doc(user!.uid)
             .update({
-              'fullname': _nameController.text, // Đồng bộ với Drawer
+              'fullname': _nameController.text,
               'phone': _phoneController.text,
-              'email': _emailController.text,
               'address': _addressController.text,
             });
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("✅ Đã lưu thông tin thành công!"),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Cập nhật thành công!"),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ Lỗi: $e"), backgroundColor: Colors.red),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Lỗi: $e"), backgroundColor: Colors.red),
+          );
+        }
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Kích thước khung tròn và ảnh để tạo hiệu ứng lòi ra ngoài
-    const double frameSize = 110.0;
-    const double avatarSize = 150.0;
-
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
           "Hồ sơ cá nhân",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Colors.green,
-        centerTitle: true,
         elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -90,101 +89,155 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (!snapshot.hasData)
             return const Center(child: CircularProgressIndicator());
 
-          var userData = (snapshot.data?.data() as Map<String, dynamic>?) ?? {};
-
-          if (_nameController.text.isEmpty)
-            _nameController.text = userData['fullname'] ?? '';
-          if (_phoneController.text.isEmpty)
-            _phoneController.text = userData['phone'] ?? '';
-          if (_emailController.text.isEmpty)
-            _emailController.text = userData['email'] ?? user?.email ?? '';
-          if (_addressController.text.isEmpty)
-            _addressController.text = userData['address'] ?? '';
-          _role = userData['role'] ?? 'user';
+          var data = snapshot.data!.data() as Map<String, dynamic>;
+          _nameController.text = data['fullname'] ?? "";
+          _phoneController.text = data['phone'] ?? "";
+          _emailController.text = data['email'] ?? "";
+          _addressController.text = data['address'] ?? "";
+          _role = data['role'] ?? "user";
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(25),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  // --- PHẦN AVATAR VỚI KHUNG TRÒN VÀ HIỆU ỨNG OVERFLOW ---
-                  Center(
-                    child: Container(
-                      width: frameSize,
-                      height: frameSize,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black, width: 3),
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      height: 100,
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(30),
+                        ),
                       ),
-                      child: OverflowBox(
-                        maxWidth: double.infinity,
-                        maxHeight: double.infinity,
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/user_avatar.png',
-                            width: avatarSize,
-                            height: avatarSize,
-                            fit: BoxFit.cover,
+                    ),
+                    // KHU VỰC AVATAR
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: SizedBox(
+                        width: 110,
+                        height: 110,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 110,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            OverflowBox(
+                              minWidth: 0,
+                              minHeight: 0,
+                              maxWidth: double.infinity,
+                              maxHeight: double.infinity,
+                              child: ClipOval(
+                                child: Image.asset(
+                                  'assets/user_avatar.png',
+                                  // CHỈNH KÍCH THƯỚC CON MÈO TẠI ĐÂY
+                                  width:
+                                      150, // Thử tăng số này lên cao để thấy nó tràn ra
+                                  height: 150,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  _role.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                        ),
+                      ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                            _nameController,
+                            "Họ và tên",
+                            Icons.person_outline,
                           ),
-                        ),
+                          _buildTextField(
+                            _emailController,
+                            "Email",
+                            Icons.email_outlined,
+                            readOnly: true,
+                          ),
+                          _buildTextField(
+                            _phoneController,
+                            "Số điện thoại",
+                            Icons.phone_android_outlined,
+                            isPhone: true,
+                          ),
+                          _buildTextField(
+                            _addressController,
+                            "Địa chỉ",
+                            Icons.location_on_outlined,
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 55,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              onPressed: _updateProfile,
+                              child: const Text(
+                                "LƯU THÔNG TIN",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _role.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 35),
-                  _buildTextField(
-                    _nameController,
-                    "Họ và Tên",
-                    Icons.person_outline,
-                  ),
-                  _buildTextField(
-                    _phoneController,
-                    "Số điện thoại",
-                    Icons.phone_android_outlined,
-                    isPhone: true,
-                  ),
-                  _buildTextField(
-                    _emailController,
-                    "Email",
-                    Icons.email_outlined,
-                  ),
-                  _buildTextField(
-                    _addressController,
-                    "Địa chỉ",
-                    Icons.location_on_outlined,
-                  ),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      onPressed: _updateProfile,
-                      child: const Text(
-                        "LƯU THÔNG TIN",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -197,18 +250,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String label,
     IconData icon, {
     bool isPhone = false,
+    bool readOnly = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
         controller: controller,
+        readOnly: readOnly,
         keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: Colors.green),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+          filled: true,
+          fillColor: readOnly ? Colors.grey[100] : Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey[200]!),
+          ),
         ),
-        validator: (v) => v!.isEmpty ? "Vui lòng nhập $label" : null,
       ),
     );
   }
