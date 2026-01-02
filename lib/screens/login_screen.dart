@@ -17,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isObscure = true;
 
-  // --- GIỮ NGUYÊN LOGIC LOADING ---
   void _showLoading() {
     showDialog(
       context: context,
@@ -31,7 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
     if (Navigator.canPop(context)) Navigator.pop(context);
   }
 
-  // --- GIỮ NGUYÊN LOGIC LOGIN ---
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     _showLoading();
@@ -101,13 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
               colors: [Colors.green.shade700, Colors.green.shade400],
             ),
           ),
-          // SỬ DỤNG STACK ĐỂ ĐẶT NÚT BACK LÊN TRÊN NỀN
           child: Stack(
             children: [
-              // LỚP 1: Nội dung chính (Header + Form)
               Column(
                 children: [
-                  // Giảm khoảng cách trên cùng xuống một chút vì đã có nút back
                   const SizedBox(height: 60),
                   const Icon(Icons.eco, size: 80, color: Colors.white),
                   const SizedBox(height: 10),
@@ -236,7 +231,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            // ĐÃ XÓA NÚT TEXT BUTTON Ở ĐÂY
                           ],
                         ),
                       ),
@@ -245,21 +239,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
-              // LỚP 2: Nút Back ở góc trên bên trái
               Positioned(
                 top: 10,
                 left: 10,
                 child: SafeArea(
-                  // Đảm bảo không bị tai thỏ che
                   child: IconButton(
-                    // Sử dụng icon mũi tên hiện đại, màu trắng cho nổi bật
                     icon: const Icon(
                       Icons.arrow_back_ios_new_rounded,
                       color: Colors.white,
                       size: 28,
                     ),
-                    onPressed: () =>
-                        Navigator.pop(context), // Quay lại màn hình trước
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
               ),
