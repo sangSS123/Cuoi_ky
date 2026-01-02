@@ -3,6 +3,12 @@
         android:label="ban_hat_giong"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- TẮT tự động khởi tạo Firebase để tránh duplicate-app -->
+        <meta-data
+            android:name="firebase_auto_init_enabled"
+            android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
