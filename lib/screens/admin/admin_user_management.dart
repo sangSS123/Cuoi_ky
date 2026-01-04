@@ -11,14 +11,12 @@ class AdminUserManagement extends StatefulWidget {
 class _AdminUserManagementState extends State<AdminUserManagement> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // --- WIDGET AVATAR "MÈO THOÁT XÁC" ---
-  // size: Kích thước của cái khung đen
   Widget _buildOverflowAvatar(String? avatarUrl, {double size = 50}) {
     double frameSize = size;
-    double catSize = size * 1.3; // Con mèo to hơn khung 30% để tràn ra ngoài
+    double catSize = size * 1.3;
 
     return SizedBox(
-      width: catSize, // Kích thước tổng thể để không bị cắt bởi ListTile
+      width: catSize,
       height: catSize,
       child: Center(
         child: Container(
@@ -26,13 +24,9 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
           height: frameSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white, // Nền trong vòng tròn
-            border: Border.all(
-              color: Colors.black, // Khung đen bao phủ
-              width: 2.5,
-            ),
+            color: Colors.white,
+            border: Border.all(color: Colors.black, width: 2.5),
           ),
-          // Sử dụng OverflowBox để con mèo nằm ngoài vòng tròn
           child: OverflowBox(
             maxWidth: catSize,
             maxHeight: catSize,
@@ -57,7 +51,6 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
     );
   }
 
-  // Hàm xóa User
   void _deleteUser(String userId) {
     showDialog(
       context: context,
@@ -81,7 +74,6 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
     );
   }
 
-  // Hàm sửa User & Phân quyền
   void _editUser(String userId, Map<String, dynamic> currentData) {
     TextEditingController nameController = TextEditingController(
       text: currentData['fullname'],
@@ -167,7 +159,6 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
                     horizontal: 15,
                     vertical: 10,
                   ),
-                  // GỌI WIDGET AVATAR ĐÃ CHỈNH SỬA
                   leading: _buildOverflowAvatar(userData['avatar'], size: 55),
                   title: Text(
                     userData['fullname'] ?? "Chưa có tên",

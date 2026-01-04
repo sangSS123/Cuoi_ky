@@ -95,7 +95,6 @@ class CartProvider with ChangeNotifier {
     return total;
   }
 
-  // Giảm số lượng của một sản phẩm đi 1
   Future<void> removeSingleItem(String productId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null || !_items.containsKey(productId)) return;
@@ -113,7 +112,6 @@ class CartProvider with ChangeNotifier {
     await fetchAndSetCart();
   }
 
-  // Xóa hoàn toàn một sản phẩm khỏi giỏ
   Future<void> removeItem(String productId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -126,7 +124,6 @@ class CartProvider with ChangeNotifier {
     await fetchAndSetCart();
   }
 
-  // Xóa sạch toàn bộ giỏ hàng sau khi thanh toán thành công
   Future<void> clearCart() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;

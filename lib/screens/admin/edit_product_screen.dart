@@ -52,7 +52,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
       'image': _imageController.text,
       'id_category': _categoryController.text,
       'quantity': int.parse(_quantityController.text),
-      'description': _descriptionController.text, // Lưu mô tả vào CSDL
+      'description': _descriptionController.text,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -91,10 +91,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
             _buildInput(_categoryController, "Mã danh mục"),
             _buildInput(_quantityController, "Số lượng kho", isNumber: true),
             const SizedBox(height: 10),
-            // Ô NHẬP MÔ TẢ CHI TIẾT DÀNH CHO SHOP
             TextFormField(
               controller: _descriptionController,
-              maxLines: 8, // Cho phép nhập dài để ghi Nguồn gốc, Hạn sử dụng...
+              maxLines: 8,
               decoration: const InputDecoration(
                 labelText: "Mô tả (Nguồn gốc, Trọng lượng, HDSD, Bảo quản...)",
                 border: OutlineInputBorder(),

@@ -5,23 +5,20 @@ import 'package:intl/intl.dart';
 class AdminOrdersScreen extends StatelessWidget {
   const AdminOrdersScreen({super.key});
 
-  // HÀM CẬP NHẬT: Giữ nguyên tên hàm, thêm logic ghi bảng revenue_reports
   Future<void> _updateOrderStatus(
     BuildContext context,
     String orderId,
     String newStatus,
-    double amount, // Thêm tham số amount để lấy số tiền đơn hàng
+    double amount,
   ) async {
     try {
       final batch = FirebaseFirestore.instance.batch();
 
-      // 1. Cập nhật trạng thái trong 'order_history' (Ảnh 1)
       final orderRef = FirebaseFirestore.instance
           .collection('order_history')
           .doc(orderId);
       batch.update(orderRef, {'status': newStatus});
 
-      // 2. LOGIC QUAN TRỌNG: Nếu là 'Hoàn thành', ghi vào 'revenue_reports' (Ảnh 2)
       if (newStatus == 'Hoàn thành') {
         final revenueRef = FirebaseFirestore.instance
             .collection('revenue_reports')
@@ -33,7 +30,7 @@ class AdminOrdersScreen extends StatelessWidget {
         });
       }
 
-      await batch.commit(); // Thực hiện ghi cả 2 bảng cùng lúc
+      await batch.commit();
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +91,7 @@ class AdminOrdersScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
-                elevation: 3,
+                elevation: 3, //do bong
                 child: ExpansionTile(
                   leading: CircleAvatar(
                     backgroundColor: _getStatusColor(status).withOpacity(0.2),
@@ -118,7 +115,7 @@ class AdminOrdersScreen extends StatelessWidget {
                         children: [
                           ...items.map(
                             (item) =>
-                                Text("• ${item['name']} x${item['quantity']}"),
+                                Text("• ${item['name']} x ${item['quantity']}"),
                           ),
                           const Divider(),
                           Text("Địa chỉ: ${data['address'] ?? 'N/A'}"),

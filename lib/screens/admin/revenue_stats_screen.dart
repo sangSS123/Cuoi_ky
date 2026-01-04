@@ -14,7 +14,6 @@ class RevenueStatsScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Lấy dữ liệu từ bảng revenue_reports
         stream: FirebaseFirestore.instance
             .collection('revenue_reports')
             .orderBy('timestamp', descending: true)
@@ -31,13 +30,11 @@ class RevenueStatsScreen extends StatelessWidget {
           int totalOrders = snapshot.data!.docs.length;
           Map<String, double> dailyStats = {};
 
-          // Xử lý dữ liệu để tính tổng và nhóm theo ngày
           for (var doc in snapshot.data!.docs) {
             Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
             double amount = (data['amount'] as num? ?? 0).toDouble();
             totalRevenue += amount;
 
-            // Lấy ngày từ timestamp
             Timestamp? timestamp = data['timestamp'] as Timestamp?;
             if (timestamp != null) {
               String dateKey = DateFormat(
@@ -49,7 +46,6 @@ class RevenueStatsScreen extends StatelessWidget {
 
           return Column(
             children: [
-              // --- PHẦN TỔNG QUAN (Card phía trên) ---
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -104,7 +100,6 @@ class RevenueStatsScreen extends StatelessWidget {
                 ),
               ),
 
-              // --- DANH SÁCH DOANH THU THEO NGÀY ---
               const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Row(

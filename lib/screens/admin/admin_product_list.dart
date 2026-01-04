@@ -38,7 +38,6 @@ class AdminProductList extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: ListTile(
-                  // Sửa thành 'image' để khớp với home_screen.dart
                   leading: Image.network(
                     data['image'] ?? "",
                     width: 50,
@@ -51,7 +50,6 @@ class AdminProductList extends StatelessWidget {
                     data['name'] ?? "Chưa có tên",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  // Sửa 'type' thành 'id_category'
                   subtitle: Text(
                     "${(data['price'] ?? 0).toInt()}đ - ${data['id_category'] ?? ''}",
                   ),
@@ -87,7 +85,6 @@ class AdminProductList extends StatelessWidget {
 
   void _confirmDelete(BuildContext context, String id) {
     showGeneralDialog(
-      // Dùng hội thoại đơn giản hơn
       context: context,
       pageBuilder: (ctx, anim1, anim2) => AlertDialog(
         title: const Text("Xác nhận"),
