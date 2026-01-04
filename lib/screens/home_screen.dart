@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
-// Import các model và screen
 import 'package:ban_hat_giong/models/cart_model.dart';
 import 'package:ban_hat_giong/screens/product_detail_screen.dart';
 import 'package:ban_hat_giong/screens/welcome_screen.dart';
@@ -11,7 +10,6 @@ import 'package:ban_hat_giong/screens/profile_screen.dart';
 import 'package:ban_hat_giong/screens/cart_screen.dart';
 import 'package:ban_hat_giong/screens/history_screen.dart';
 
-// Các màn hình quản lý dành cho Admin
 import 'package:ban_hat_giong/screens/admin/admin_product_list.dart';
 import 'package:ban_hat_giong/screens/admin/admin_user_management.dart';
 import 'package:ban_hat_giong/screens/admin/admin_orders_screen.dart';
@@ -33,11 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Cập nhật giỏ hàng khi vào app
     Future.microtask(() => context.read<CartProvider>().fetchAndSetCart());
   }
 
-  // Chuyển đổi ID danh mục sang tên hiển thị
   String formatCategory(String? id) {
     if (id == 'cay_an_la') return 'Rau';
     if (id == 'cay_an_qua') return 'Cây ăn quả';
@@ -64,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET: THANH TÌM KIẾM TRÊN APPBAR ---
   Widget _buildSearchField() {
     return Container(
       height: 40,
@@ -85,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET: ICON GIỎ HÀNG CÓ SỐ LƯỢNG ---
   Widget _buildCartBadge() {
     return Consumer<CartProvider>(
       builder: (context, cart, child) => IconButton(
@@ -102,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET: DRAWER CÓ AVATAR "LÒI KHUNG" ---
   Widget _buildDrawer() {
     return Drawer(
       child: StreamBuilder<DocumentSnapshot>(
@@ -132,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 accountEmail: Text(user?.email ?? ""),
-                // PHẦN AVATAR ĐỘC LẬP VỚI KHUNG
                 currentAccountPicture: OverflowBox(
                   minWidth: 0,
                   minHeight: 0,
@@ -140,9 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   maxHeight: double.infinity,
                   child: Stack(
                     alignment: Alignment.center,
-                    clipBehavior: Clip.none, // Cho phép ảnh lòi ra ngoài Stack
+                    clipBehavior: Clip.none,
                     children: [
-                      // 1. Khung viền trắng (Cố định 80x80)
                       Container(
                         width: 80,
                         height: 80,
@@ -151,12 +142,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           border: Border.all(color: Colors.black, width: 2.5),
                         ),
                       ),
-                      // 2. Avatar Mèo (Chỉnh size ở đây để thấy hiệu ứng lòi khung)
                       ClipOval(
                         child: Image.asset(
                           'assets/user_avatar.png',
-                          width:
-                              113, // Bạn có thể chỉnh lên 150, 200 để thấy nó lòi ra rõ rệt
+                          width: 113,
                           height: 113,
                           fit: BoxFit.cover,
                         ),
@@ -271,7 +260,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET: THANH CHỌN DANH MỤC (CHIPS) ---
   Widget _buildCategorySlider() {
     return Container(
       height: 60,
@@ -300,7 +288,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGET: LƯỚI SẢN PHẨM 2 CỘT ---
   Widget _buildProductGrid() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('products').snapshots(),

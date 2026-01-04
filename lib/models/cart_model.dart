@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// 1. Định nghĩa lớp CartItem - PHẢI CÓ để các file Screen không bị lỗi
 class CartItem {
   final String id;
   final String name;
@@ -34,10 +33,8 @@ class CartProvider with ChangeNotifier {
 
   Map<String, CartItem> get items => {..._items};
 
-  // Trả về số lượng mặt hàng khác nhau trong giỏ
   int get itemCount => _items.length;
 
-  // Tải dữ liệu giỏ hàng từ Firestore
   Future<void> fetchAndSetCart() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -60,7 +57,6 @@ class CartProvider with ChangeNotifier {
     }
   }
 
-  // Thêm sản phẩm vào giỏ hàng và đồng bộ lên Firestore
   Future<void> addItem(
     String productId,
     double price,
@@ -91,7 +87,6 @@ class CartProvider with ChangeNotifier {
     await fetchAndSetCart();
   }
 
-  // Tính tổng tiền của tất cả sản phẩm trong giỏ
   double get totalAmount {
     double total = 0.0;
     _items.forEach((key, cartItem) {

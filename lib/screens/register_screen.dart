@@ -17,7 +17,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // --- GIỮ NGUYÊN LOGIC VALIDATE ---
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w\-\.]+@([\w\-\.]+\.)+[\w\-\.]{2,4}$').hasMatch(email);
   }
@@ -35,7 +34,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (Navigator.canPop(context)) Navigator.pop(context);
   }
 
-  // --- GIỮ NGUYÊN LOGIC ĐĂNG KÝ ---
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     _showLoading();
@@ -102,7 +100,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           child: Stack(
             children: [
-              // LỚP 1: Nội dung chính
               Column(
                 children: [
                   const SizedBox(height: 60),
@@ -223,7 +220,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
 
-              // LỚP 2: Nút Back
               Positioned(
                 top: 10,
                 left: 10,
@@ -245,7 +241,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Hàm Helper tạo TextField trang trí
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,

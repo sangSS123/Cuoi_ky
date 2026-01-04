@@ -160,7 +160,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const Divider(height: 40),
 
-                  // --- PHẦN QR CODE TỪ ASSETS ---
                   const Center(
                     child: Text(
                       "QUÉT MÃ QR ĐỂ THANH TOÁN",
@@ -182,7 +181,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: Image.asset(
-                          'assets/qr_code.png', // Gọi đúng file trong assets của bạn
+                          'assets/qr_code.png',
                           width: 250,
                           height: 250,
                           fit: BoxFit.contain,

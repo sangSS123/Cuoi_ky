@@ -29,7 +29,6 @@ class ProductDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Hình ảnh sản phẩm lớn
                   Stack(
                     children: [
                       Container(
@@ -63,11 +62,12 @@ class ProductDetailScreen extends StatelessWidget {
                     ],
                   ),
 
-                  // 2. Phần thông tin chi tiết
+                  //Phần thông tin chi tiết
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start, //Trục chéo( Trai sang phai)
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -134,9 +134,7 @@ class ProductDetailScreen extends StatelessWidget {
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(
-                          height: 100,
-                        ), // Khoảng trống để không bị nút đè
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -147,7 +145,7 @@ class ProductDetailScreen extends StatelessWidget {
         ],
       ),
 
-      // 3. Nút mua hàng cố định ở dưới
+      //Nút mua hàng cố định ở dưới
       bottomSheet: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -164,15 +162,14 @@ class ProductDetailScreen extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: isOutOfStock ? Colors.grey : Colors.green,
             minimumSize: const Size(double.infinity, 55),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
+            shape:
+                RoundedRectangleBorder //Hình chữ nhật bo góc
+                (borderRadius: BorderRadius.circular(15)),
             elevation: 5,
           ),
           onPressed: isOutOfStock
               ? null
               : () {
-                  // GIỮ NGUYÊN LOGIC THÊM VÀO GIỎ
                   context.read<CartProvider>().addItem(
                     product['id'],
                     (product['price'] as num).toDouble(),
@@ -180,7 +177,6 @@ class ProductDetailScreen extends StatelessWidget {
                     product['image'],
                   );
 
-                  // Hiển thị thông báo Snackbar trang trí lại
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

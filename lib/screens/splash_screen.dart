@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_screen.dart'; // Màn hình chính (nếu đã đăng nhập)
-import 'welcome_screen.dart'; // <--- SỬA: Import màn hình Welcome
+import 'home_screen.dart';
+import 'welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,12 +23,10 @@ class _SplashScreenState extends State<SplashScreen> {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if (!mounted) return;
       if (user == null) {
-        // CHƯA ĐĂNG NHẬP -> VÀO MÀN HÌNH CHÀO (WELCOME)
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const WelcomeScreen()),
         );
       } else {
-        // ĐÃ ĐĂNG NHẬP -> VÀO TRANG CHỦ
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => HomeScreen()),
         );

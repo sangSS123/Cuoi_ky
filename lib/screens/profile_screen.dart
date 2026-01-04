@@ -111,7 +111,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    // KHU VỰC AVATAR
                     Padding(
                       padding: const EdgeInsets.only(top: 20),
                       child: SizedBox(
@@ -148,9 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: ClipOval(
                                 child: Image.asset(
                                   'assets/user_avatar.png',
-                                  // CHỈNH KÍCH THƯỚC CON MÈO TẠI ĐÂY
-                                  width:
-                                      150, // Thử tăng số này lên cao để thấy nó tràn ra
+                                  width: 150,
                                   height: 150,
                                   fit: BoxFit.cover,
                                 ),

@@ -8,9 +8,7 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Lắng nghe sự thay đổi của giỏ hàng từ CartProvider
     final cart = Provider.of<CartProvider>(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -43,7 +41,6 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  // Widget hiển thị khi giỏ hàng trống
   Widget _buildEmptyCart() {
     return Center(
       child: Column(
@@ -60,7 +57,6 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  // Widget hiển thị từng item trong giỏ hàng
   Widget _buildCartItem(
     BuildContext context,
     CartItem item,
@@ -74,7 +70,6 @@ class CartScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // Ảnh sản phẩm
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
@@ -106,7 +101,6 @@ class CartScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Bộ điều khiển tăng giảm số lượng
                   Row(
                     children: [
                       _quantityButton(
@@ -145,7 +139,6 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  // Widget nút tăng/giảm số lượng
   Widget _quantityButton(IconData icon, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
@@ -160,7 +153,6 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  // Widget hiển thị tổng tiền và nút MUA HÀNG
   Widget _buildBottomSummary(BuildContext context, CartProvider cart) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -203,7 +195,6 @@ class CartScreen extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                // Chuyển hướng đến màn hình thanh toán
                 Navigator.push(
                   context,
                   MaterialPageRoute(

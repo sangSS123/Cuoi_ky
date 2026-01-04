@@ -10,8 +10,6 @@ import 'package:ban_hat_giong/screens/checkout_screen.dart';
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
-  // --- HÀM XOÁ LỊCH SỬ ĐƠN HÀNG ---
-  // Việc xoá này chỉ xoá trong 'order_history', không xoá trong 'revenue_reports'
   Future<void> _deleteOrderHistory(BuildContext context, String orderId) async {
     bool confirm =
         await showDialog(
@@ -55,7 +53,6 @@ class HistoryScreen extends StatelessWidget {
     }
   }
 
-  // --- HÀM MUA LẠI (KIỂM TRA TỒN KHO) ---
   Future<void> _reorder(BuildContext context, List<dynamic> items) async {
     final cart = Provider.of<CartProvider>(context, listen: false);
 
@@ -84,7 +81,7 @@ class HistoryScreen extends StatelessWidget {
         }
       }
 
-      Navigator.pop(context); // Đóng loading
+      Navigator.pop(context);
 
       if (hasStock) {
         Navigator.push(
@@ -211,6 +208,7 @@ class HistoryScreen extends StatelessWidget {
                                   ),
                                 ),
                                 ElevatedButton(
+                                  //Mua lai
                                   onPressed: () => _reorder(context, items),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.blue,
