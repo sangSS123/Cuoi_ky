@@ -145,7 +145,6 @@ class ProductDetailScreen extends StatelessWidget {
         ],
       ),
 
-      //Nút mua hàng cố định ở dưới
       bottomSheet: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
